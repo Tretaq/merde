@@ -20,27 +20,42 @@ app.command("/merde-ping", async ({ command, ack, respond }) => {
 // app.command("/merde-catfact", async ({ ack, respond }) => {
 //   await ack();
 
-//   try {
-//     const response = await axios.get("https://catfact.ninja/fact");
-//     await respond({ text: `Cat Fact:\n${response.data.fact}` });
-//   } catch (err) {
-//     await respond({ text: "Failed to fetch a cat fact." });
-//   }
+  // try {
+  //   const response = await axios.get("https://catfact.ninja/fact");
+  //   await respond({ text: `Cat Fact:\n${response.data.fact}` });
+  // } catch (err) {
+  //   await respond({ text: "Failed to fetch a cat fact." });
+  // }
 // });
-
+// await respond({ text: `Written ${argument}` });
 app.command("/merde-search-monster", async({ command , ack , respond}) => {
   await ack();
   
   
-  const argument = command.text.trim();
-  console.log(argument);
-  if(!argument){
-    await respond('Please provide a topic! e.g. `/merde-fact owlbear`');
+  const monsterName = command.text.trim();
+
+  if(!monsterName){
+    await respond('Please provide a topic! e.g. `/merde-search-monster owlbear`');
     return;
   }
-  await respond({ text: `Written ${argument}` });
+    try {
+    const response = await axios.get("https://www.dnd5eapi.co/api/2014/monsters");
+    const monsters = response.data.results;
+    const matched_monster = monsters.find(
+        (monster) => monster.name.toLowerCase() === monsterName
+      );
+      if (matched_monster) {
+        const detail = await axios.get(`https://www.dnd5eapi.co${matched_monster.url}`);
+        console.log(detail.data); 
+        await respond({ text: `Found: ${detail.data.name}, HP: ${detail.data.hit_points}` });
+      } else {
+        await respond({ text: `No monster found named "${monsterName}"` });
+      }
 
-
+    // await respond({ text: `Cat Fact:\n${response.data.fact}` });
+  } catch (err) {
+    await respond({ text: "Failed to fetch monsters info." });
+  }
 });
 
 app.command("/merde-help", async ({ ack, respond }) => {
