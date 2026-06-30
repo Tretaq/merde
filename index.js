@@ -41,13 +41,20 @@ app.command("/merde-search-monster", async({ command , ack , respond}) => {
     try {
     const response = await axios.get("https://www.dnd5eapi.co/api/2014/monsters");
     const monsters = response.data.results;
+    
     const matched_monster = monsters.find(
         (monster) => monster.name.toLowerCase() === monsterName
       );
       if (matched_monster) {
         const detail = await axios.get(`https://www.dnd5eapi.co${matched_monster.url}`);
         console.log(detail.data); 
-        await respond({ text: `Found: ${detail.data.name}, HP: ${detail.data.hit_points}` });
+          if (detail.data.image) {
+            const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
+          }
+        await respond({ 
+          text: `Name: ${detail.data.name}\nSize: ${detail.data.size}\nType:  ${detail.data.type}\nHP: ${detail.data.hit_points}\nAC: ${detail.data.armor_class.value}\nSpeed: ${detail.data.speed.walk}\nAttributes:\n   Strength: ${detail.data.strength}\n   Dexterity: ${detail.data.dexterity}\n   Constitution: ${detail.data.constitution}\n   Intelligence: ${detail.data.intelligence}\n   Wisdom: ${detail.data.wisdom}\n   Charisma: ${detail.data.charisma}`
+          
+        });
       } else {
         await respond({ text: `No monster found named "${monsterName}"` });
       }
