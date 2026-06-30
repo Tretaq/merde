@@ -83,6 +83,7 @@ app.command("/merde-search-random-monster", async ({ command, ack, respond }) =>
     const response = await axios.get("https://www.dnd5eapi.co/api/2014/monsters");
     const monsters = response.data.results;
     const randomMonster = monsters[Math.floor(Math.random() * monsters.length)];
+    console.log(randomMonster.url);
     const detail = await axios.get(`https://www.dnd5eapi.co${randomMonster.url}`);
 
     const blocks = [
@@ -122,7 +123,9 @@ app.command("/merde-help", async ({ ack, respond }) => {
     text:
 `Available Commands:
 /merde-ping - Check bot latency
-/merde-catfact - Get a cat fact`
+/merde-search-monster - Get info about a selected monster
+/merde-search-random-monster - Get info about a random monster`
+
   });
 });
 
