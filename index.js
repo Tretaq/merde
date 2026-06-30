@@ -43,11 +43,10 @@ app.command("/merde-search-monster", async({ command , ack , respond}) => {
     const monsters = response.data.results;
     
     const matched_monster = monsters.find(
-        (monster) => monster.name.toLowerCase() === monsterName
+        (monster) => monster.name.toLowerCase() === monsterName.toLowerCase()
       );
       if (matched_monster) {
         const detail = await axios.get(`https://www.dnd5eapi.co${matched_monster.url}`);
-        console.log(detail.data); 
         if (detail.data.image) {
           const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
         }
@@ -110,6 +109,102 @@ app.command("/merde-search-random-monster", async ({ command, ack, respond }) =>
     await respond({ text: "Something went wrong :<" });
   }
 });
+app.command("/merde-search-equipment", async({ command , ack , respond}) => {
+  await ack();
+
+  const itemName = command.text.trim();
+
+  if(!itemName){
+    await respond('Please provide a topic! e.g. `/merde-search-monster crossbow-heavy`');
+    return;
+  }
+  try{
+      const response = await axios.get("https://www.dnd5eapi.co/api/2014/equipment");
+      const equipment = response.data.results;
+
+        const matched_equipment = equipment.find(
+        (item) => item.index.toLowerCase() === itemName.toLowerCase()
+      );
+      if(matched_equipment){
+        const detail = await axios.get(`https://www.dnd5eapi.co${matched_equipment.url}`);
+        if (detail.data.image) {
+          const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
+        }
+        const text = [
+          `*Name:* ${detail.data.name}`,
+          detail.data.weapon_category ? `*Weapon Category:* ${detail.data.weapon_category}` : null,
+          detail.data.weapon_range ? `*Weapon Range:* ${detail.data.weapon_range}` : null,
+          detail.data.cost ? `*Cost:* ${detail.data.cost.quantity}${detail.data.cost.unit}` : null,
+          detail.data.damage ? `*Damage:* ${detail.data.damage.damage_dice} ${detail.data.damage.damage_type.name}` : null,
+          detail.data.range ? `*Range:* ${detail.data.range.normal}/${detail.data.range.long}` : null,
+          detail.data.weight ? `*Weight:* ${detail.data.weight} lb` : null,
+          detail.data.properties?.length ? `*Properties:* ${detail.data.properties.map(p => p.name).join(', ')}` : null,
+        ].filter(Boolean).join('\n');
+        const blocks = [
+            {
+              type: "section",
+              text: { type: "mrkdwn", text }
+            }
+          ];
+          if (detail.data.image) {
+            blocks.push({
+              type: "image",
+              image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+              alt_text: detail.data.name
+            });
+          }
+          await respond({ blocks });
+
+      }else {
+        await respond({ text: `No item found named "${itemName}"` });
+      }
+
+
+  }
+  catch (err) {
+  console.error(err);
+  await respond({ text: "Failed to fetch equipment info." });
+}
+
+});
+app.command("/merde-search-random-equipment", async ({ command, ack, respond }) => {
+  await ack();
+  try {
+    const response = await axios.get("https://www.dnd5eapi.co/api/2014/equipment");
+    const equipments   = response.data.results;
+    const randomEquipments = equipments[Math.floor(Math.random() * equipments.length)];
+    const detail = await axios.get(`https://www.dnd5eapi.co${randomEquipments.url}`);
+
+    const text = [
+          `*Name:* ${detail.data.name}`,
+          detail.data.weapon_category ? `*Weapon Category:* ${detail.data.weapon_category}` : null,
+          detail.data.weapon_range ? `*Weapon Range:* ${detail.data.weapon_range}` : null,
+          detail.data.cost ? `*Cost:* ${detail.data.cost.quantity}${detail.data.cost.unit}` : null,
+          detail.data.damage ? `*Damage:* ${detail.data.damage.damage_dice} ${detail.data.damage.damage_type.name}` : null,
+          detail.data.range ? `*Range:* ${detail.data.range.normal}/${detail.data.range.long}` : null,
+          detail.data.weight ? `*Weight:* ${detail.data.weight} lb` : null,
+          detail.data.properties?.length ? `*Properties:* ${detail.data.properties.map(p => p.name).join(', ')}` : null,
+        ].filter(Boolean).join('\n');
+        const blocks = [
+            {
+              type: "section",
+              text: { type: "mrkdwn", text }
+            }
+          ];
+          if (detail.data.image) {
+            blocks.push({
+              type: "image",
+              image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+              alt_text: detail.data.name
+            });
+          }
+          await respond({ blocks });
+  } catch (error) {
+    console.error(error); 
+    await respond({ text: "Something went wrong :<" });
+  }
+});
+
 
 
 
