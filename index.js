@@ -115,7 +115,7 @@ app.command("/merde-search-equipment", async({ command , ack , respond}) => {
   const itemName = command.text.trim();
 
   if(!itemName){
-    await respond('Please provide a topic! e.g. `/merde-search-monster crossbow-heavy`');
+    await respond('Please provide a topic! e.g. `/merde-search-equipment crossbow-heavy`');
     return;
   }
   try{
@@ -204,11 +204,113 @@ app.command("/merde-search-random-equipment", async ({ command, ack, respond }) 
     await respond({ text: "Something went wrong :<" });
   }
 });
+app.command("/merde-search-spells", async({ command , ack , respond}) => {
+  await ack();
+
+  const itemSpells = command.text.trim();
+
+  if(!itemSpells){
+    await respond('Please provide a topic! e.g. `/merde-search-spells fear`');
+    return;
+  }
+  try{
+      const response = await axios.get("https://www.dnd5eapi.co/api/2014/spells");
+      const spells = response.data.results;
+
+        const matched_spells = spells.find(
+        (spell) => spell.index.toLowerCase() === itemSpells.toLowerCase()
+      );
+      if(matched_spells){
+        const detail = await axios.get(`https://www.dnd5eapi.co${matched_spells.url}`);
+        if (detail.data.image) {
+          const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
+        }
+        const text = [
+            `*Name:* ${detail.data.name}`,
+            detail.data.school ? `*School:* ${detail.data.school.name}` : null,
+            detail.data.level !== undefined ? `*Level:* ${detail.data.level}` : null,
+            detail.data.casting_time ? `*Casting Time:* ${detail.data.casting_time}` : null,
+            detail.data.range ? `*Range:* ${detail.data.range}` : null,
+            detail.data.components?.length ? `*Components:* ${detail.data.components.join(', ')}` : null,
+            detail.data.duration ? `*Duration:* ${detail.data.duration}` : null,
+            `*Concentration:* ${detail.data.concentration ? 'Yes' : 'No'}`,
+            `*Ritual:* ${detail.data.ritual ? 'Yes' : 'No'}`,
+            detail.data.damage ? `*Damage:* ${Object.values(detail.data.damage.damage_at_character_level)[0]} ${detail.data.damage.damage_type.name}` : null,
+            detail.data.classes?.length ? `*Classes:* ${detail.data.classes.map(c => c.name).join(', ')}` : null,
+            detail.data.desc?.length ? `*Description:* ${detail.data.desc.join(' ')}` : null,
+          ].filter(Boolean).join('\n');
+
+          const blocks = [
+            {
+              type: "section",
+              text: { type: "mrkdwn", text }
+            }
+          ];
+          if (detail.data.image) {
+            blocks.push({
+              type: "image",
+              image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+              alt_text: detail.data.name
+            });
+          }
+          await respond({ blocks });
+
+      }else {
+        await respond({ text: `No spell found named "${itemSpells}"` });
+      }
 
 
+  }
+  catch (err) {
+  console.error(err);
+  await respond({ text: "Failed to fetch equipment info." });
+}
 
+});
+app.command("/merde-search-random-spells", async({ command , ack , respond}) => {
+  await ack();
+  try {
+    const response = await axios.get("https://www.dnd5eapi.co/api/2014/spells");
+    const spells  = response.data.results;
+    const randomSpells = spells[Math.floor(Math.random() * spells.length)];
+    const detail = await axios.get(`https://www.dnd5eapi.co${randomSpells.url}`);
 
+    const text = [
+            `*Name:* ${detail.data.name}`,
+            detail.data.school ? `*School:* ${detail.data.school.name}` : null,
+            detail.data.level !== undefined ? `*Level:* ${detail.data.level}` : null,
+            detail.data.casting_time ? `*Casting Time:* ${detail.data.casting_time}` : null,
+            detail.data.range ? `*Range:* ${detail.data.range}` : null,
+            detail.data.components?.length ? `*Components:* ${detail.data.components.join(', ')}` : null,
+            detail.data.duration ? `*Duration:* ${detail.data.duration}` : null,
+            `*Concentration:* ${detail.data.concentration ? 'Yes' : 'No'}`,
+            `*Ritual:* ${detail.data.ritual ? 'Yes' : 'No'}`,
+            detail.data.damage ? `*Damage:* ${Object.values(detail.data.damage.damage_at_character_level)[0]} ${detail.data.damage.damage_type.name}` : null,
+            detail.data.classes?.length ? `*Classes:* ${detail.data.classes.map(c => c.name).join(', ')}` : null,
+            detail.data.desc?.length ? `*Description:* ${detail.data.desc.join(' ')}` : null,
+          ].filter(Boolean).join('\n');
 
+        const blocks = [
+            {
+              type: "section",
+              text: { type: "mrkdwn", text }
+            }
+          ];
+          if (detail.data.image) {
+            blocks.push({
+              type: "image",
+              image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+              alt_text: detail.data.name
+            });
+          }
+          await respond({ blocks });
+  } catch (error) {
+    console.error(error); 
+    await respond({ text: "Something went wrong :<" });
+  }
+  
+
+});
 
 
 
