@@ -48,13 +48,26 @@ app.command("/merde-search-monster", async({ command , ack , respond}) => {
       if (matched_monster) {
         const detail = await axios.get(`https://www.dnd5eapi.co${matched_monster.url}`);
         console.log(detail.data); 
+        if (detail.data.image) {
+          const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
+        }
+        const blocks = [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Name:* ${detail.data.name}\n*Size:* ${detail.data.size}\n*Type:* ${detail.data.type}\n*HP:* ${detail.data.hit_points}\n*AC:* ${detail.data.armor_class[0].value}\n*Speed:* ${detail.data.speed.walk}\n*Attributes:*\n   Strength: ${detail.data.strength}\n   Dexterity: ${detail.data.dexterity}\n   Constitution: ${detail.data.constitution}\n   Intelligence: ${detail.data.intelligence}\n   Wisdom: ${detail.data.wisdom}\n   Charisma: ${detail.data.charisma}`
+              }
+            }
+          ];
           if (detail.data.image) {
-            const imageUrl = `https://www.dnd5eapi.co${detail.data.image}`;
+            blocks.push({
+              type: "image",
+              image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+              alt_text: detail.data.name
+            });
           }
-        await respond({ 
-          text: `Name: ${detail.data.name}\nSize: ${detail.data.size}\nType:  ${detail.data.type}\nHP: ${detail.data.hit_points}\nAC: ${detail.data.armor_class.value}\nSpeed: ${detail.data.speed.walk}\nAttributes:\n   Strength: ${detail.data.strength}\n   Dexterity: ${detail.data.dexterity}\n   Constitution: ${detail.data.constitution}\n   Intelligence: ${detail.data.intelligence}\n   Wisdom: ${detail.data.wisdom}\n   Charisma: ${detail.data.charisma}`
-          
-        });
+          await respond({ blocks });
       } else {
         await respond({ text: `No monster found named "${monsterName}"` });
       }
