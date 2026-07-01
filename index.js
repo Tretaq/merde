@@ -201,8 +201,6 @@ app.command("/merde-search-random-equipment", async ({ command, ack, respond }) 
     await respond({ text: "Something went wrong :<" });
   }
 });
-
-
 app.command("/merde-search-spells", async ({ command, ack, respond }) => {
   await ack();
   const itemSpells = command.text.trim();
@@ -304,7 +302,93 @@ app.command("/merde-search-random-spells", async({ command , ack , respond}) => 
   
 
 });
+app.command("/merde-search-magic-items", async ({ command, ack, respond }) => {
+  await ack();
+  const itemMeq = command.text.trim();
+  if (!itemMeq) {
+    await respond('Please provide a topic! e.g. `/merde-search-magic-items mace-of-terror`');
+    return;
+  }
+  try {
+    const response = await axios.get("https://www.dnd5eapi.co/api/2014/magic-items");
+    const meqs = response.data.results;
+    const matched_meqs = meqs.find(
+      (meq) => meq.name.toLowerCase() === itemMeq.toLowerCase()
+    );
+    if (matched_meqs) {
+      const detail = await axios.get(`https://www.dnd5eapi.co${matched_meqs.url}`);
 
+      const text = [
+  `*Name:* ${detail.data.name}`,
+  detail.data.equipment_category ? `*Category:* ${detail.data.equipment_category.name}` : null,
+  detail.data.rarity ? `*Rarity:* ${detail.data.rarity.name}` : null,
+  detail.data.variants?.length ? `*Variants:* ${detail.data.variants.map(v => v.name).join(', ')}` : null,
+  detail.data.desc?.length ? `*Description:*\n${detail.data.desc.join('\n\n')}` : null,
+].filter(Boolean).join('\n');
+
+const blocks = [
+  {
+    type: "section",
+    text: { type: "mrkdwn", text }
+  }
+];
+
+if (detail.data.image) {
+  blocks.push({
+    type: "image",
+    image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+    alt_text: detail.data.name
+  });
+}
+
+      await respond({ blocks });
+    } else {
+      await respond({ text: `No magic item found named "${itemMeq}"` });
+    }
+  } catch (err) {
+    console.error(err);
+    await respond({ text: "Failed to fetch spell info." });
+  }
+});
+app.command("/merde-search-random-magic-items", async({ command , ack , respond}) => {
+  await ack();
+  try {
+    const response = await axios.get("https://www.dnd5eapi.co/api/2014/magic-items");
+    const meqs  = response.data.results;
+    const random_meqs = meqs[Math.floor(Math.random() * meqs.length)];
+    const detail = await axios.get(`https://www.dnd5eapi.co${random_meqs.url}`);
+
+          const text = [
+  `*Name:* ${detail.data.name}`,
+  detail.data.equipment_category ? `*Category:* ${detail.data.equipment_category.name}` : null,
+  detail.data.rarity ? `*Rarity:* ${detail.data.rarity.name}` : null,
+  detail.data.variants?.length ? `*Variants:* ${detail.data.variants.map(v => v.name).join(', ')}` : null,
+  detail.data.desc?.length ? `*Description:*\n${detail.data.desc.join('\n\n')}` : null,
+].filter(Boolean).join('\n');
+
+const blocks = [
+  {
+    type: "section",
+    text: { type: "mrkdwn", text }
+  }
+];
+
+if (detail.data.image) {
+  blocks.push({
+    type: "image",
+    image_url: `https://www.dnd5eapi.co${detail.data.image}`,
+    alt_text: detail.data.name
+  });
+}
+
+      await respond({ blocks });
+  } catch (error) {
+    console.error(error); 
+    await respond({ text: "Something went wrong :<" });
+  }
+  
+
+});
 
 
 app.command("/merde-help", async ({ ack, respond }) => {
@@ -314,7 +398,15 @@ app.command("/merde-help", async ({ ack, respond }) => {
 `Available Commands:
 /merde-ping - Check bot latency
 /merde-search-monster - Get info about a selected monster
-/merde-search-random-monster - Get info about a random monster`
+/merde-search-random-monster - Get info about a random monster
+/merde-search-equipment - Get info about a selected equipment
+/merde-search-random-equipment - Get info about a random equipment
+/merde-search-spells - Get info about a selected spell
+/merde-search-random-spells - Get info about a random spell
+/merde-search-magic-items- Get info about a selected magic item
+/merde-search-random-magic-items - Get info about a random magic item
+`
+
 
   });
 });
